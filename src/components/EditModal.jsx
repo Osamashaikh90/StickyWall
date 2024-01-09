@@ -1,51 +1,61 @@
+/* eslint-disable react/prop-types */
 import  { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { CloseEditedModal, updateEditedNote } from '../utils/redux/slices/editNoteSlice';
+import { CloseEditedModal, editNote } from '../utils/redux/slices/editNoteSlice';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-const EditModal = () => {
+const EditModal = ({noteToEdit}) => {
   const dispatch = useDispatch();
-  const isModalOpen = useSelector((store) => store.editNote.isModalOpen);
-  const editedNote = useSelector((store) => store.editNote.editedNote);
+  const noteList = useSelector((store) => store.editNote.noteList);
 
-  // console.log('Edit Modal Component Rendered');
-  
-  const [updatedTitle, setUpdatedTitle] = useState(editedNote?.title || '');
-  const [updatedContent, setUpdatedContent] = useState(editedNote?.content || '');
+  const [title,setTitle] = useState('')
+  const [content,setContent] = useState('')
 
-  useEffect(() => {
-    setUpdatedTitle(editedNote?.title || '');
-    setUpdatedContent(editedNote?.content || '');
-  }, [editedNote]);
+  useEffect(()=>{
+    if (noteToEdit) {
+      const note = noteList?.find((note) => note.id === noteToEdit);
+      if (note) {
+        setTitle(note.title || '');
+        setContent(note.content || '');
+      }
+    }
+  },[noteToEdit,noteList])
 
-// console.log("editednote:",editedNote);
-  const handleUpdateNote = () => {
-    dispatch(updateEditedNote({ title: updatedTitle, content: updatedContent }));
-   
-    // console.log(updatedTitle);
-    dispatch(CloseEditedModal());
-  };
+  const HandleOnSubmit = (e)=>{
+    let payload = {
+      title:title,
+      content:content,
+      noteid:noteToEdit
+    }
+    console.log("Payload:", payload); 
+    e.preventDefault()
+    dispatch(editNote(payload))
+    dispatch(CloseEditedModal())
+    toast("Note Updated Successfully...")
+  } 
 
   return (
     <>
-      {isModalOpen && (
+     
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50">
         <div className='p-4 bg-white rounded-lg min-h-96 min-w-96 max-w-[600px]'>
           <h1 className="mb-4 text-2xl font-semibold">Edit Note</h1>
-          <form onSubmit={handleUpdateNote}>
+          <form onSubmit={HandleOnSubmit}>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700">Title:</label>
               <input
                 type="text"
-                value={updatedTitle}
-                onChange={(e) => setUpdatedTitle(e.target.value)}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
                 className="w-full p-2 mt-1 border rounded-md"
               />
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700">Content:</label>
               <textarea
-                value={updatedContent}
-                onChange={(e) => setUpdatedContent(e.target.value)}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
                 className="w-full p-2 mt-1 border rounded-md"
                 rows="4"
               />
@@ -58,10 +68,11 @@ const EditModal = () => {
                 Update Note
               </button>
             </div>
+            <p className='mt-2'>PS: Reload Once to reflect changes after submission.</p>
           </form>
           </div>
         </div>
-      )}
+      
     </>
   );
 };
